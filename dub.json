@@ -1,0 +1,23 @@
+{
+	"name": "liblstparse",
+	"sourcePaths": ["source"],
+	"importPaths": ["source"],
+	"targetPath": ".out/bin",
+	"targetName": "lstparse",
+	"configurations": [
+		{
+			"name": "default"
+		},
+		{
+			"name": "unittest",
+			"targetType": "autodetect",
+			"sourcePaths": ["tests/source"],
+			"importPaths": [
+				"tests/source"
+			],
+			"dependencies": {
+				"aurorafw:unit": "0.0.1-alpha.4"
+			}
+		}
+	]
+}
