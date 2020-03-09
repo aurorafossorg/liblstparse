@@ -1,0 +1,11 @@
+       |module tests.res.zerocov;
+       |
+       |///
+       |int foo(int t)
+       |{
+0000000|        return t * 2;
+       |}
+       |
+       |///
+       |unittest {}
+zerocov.d is 0% covered

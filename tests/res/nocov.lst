@@ -1,0 +1,7 @@
+       |module tests.res.nocov;
+       |
+       |///
+       |unittest{
+       |
+       |}
+nocov.d has no code

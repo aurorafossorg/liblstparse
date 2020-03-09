@@ -1,0 +1,13 @@
+       |module tests.res.tocov;
+       |
+       |///
+       |int foo(int t)
+       |{
+      1|        return t * 2;
+       |}
+       |
+       |///
+       |unittest {
+      1|        assert(foo(2) == 4);
+       |}
+tocov.d is 100% covered
