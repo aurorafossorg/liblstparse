@@ -33,11 +33,6 @@ For more info about intellectual property visit: aurorafoss.org or
 directly send an email to: contact (at) aurorafoss.org .
 */
 
-
 import reggae;
 
-mixin build!(
-	dubDefaultTarget!(
-		CompilerFlags("-g -debug -w -color")
-	)
-);
+mixin build!(dubDefaultTarget!(CompilerFlags("-g -debug -w -color")));

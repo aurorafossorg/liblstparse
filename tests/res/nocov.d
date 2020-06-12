@@ -1,6 +1,6 @@
 module tests.res.nocov;
 
 ///
-unittest{
+unittest {
 
 }

@@ -33,7 +33,6 @@ For more info about intellectual property visit: aurorafoss.org or
 directly send an email to: contact (at) aurorafoss.org .
 */
 
-
 /++
 LST Parser
 
@@ -54,14 +53,11 @@ import std.typecons;
 import std.algorithm.iteration;
 import std.array;
 
-
 /** LST File struct
  *
  * This defines an LST File model with all associated covered lines.
  */
-@safe
-public struct LSTFile
-{
+@safe public struct LSTFile {
 	/** LSTFile filename constructor
 	 *
 	 * This constructs a LSTFile using directly the path of filename string
@@ -71,38 +67,30 @@ public struct LSTFile
 	 * LSTFile lst = LSTFile("tuna.lst");
 	 * --------------------
 	 */
-	@safe
-	public this(string filename)
-	{
+	@safe public this(string filename) {
 		import std.conv : to;
 
-		auto buf = readText(filename)
-			.splitLines;
+		auto buf = readText(filename).splitLines;
 
-		foreach(i, ref line; buf[0 .. $-1])
-		{
+		foreach (i, ref line; buf[0 .. $ - 1]) {
 			immutable auto covered = line.split("|").front.strip;
 
-			if(covered.empty)
+			if (covered.empty)
 				continue;
 
-			this._linesCovered[i+1] = covered.to!int;
+			this._linesCovered[i + 1] = covered.to!int;
 		}
 
 		auto finalLine = buf.back;
 
-		if(!finalLine.endsWith(" has no code"))
-		{
+		if (!finalLine.endsWith(" has no code")) {
 			auto splitted = finalLine.split("% covered").front.split(" ");
 			this._totalCoverage = splitted.back.to!byte;
 			this._filename = splitted[0 .. $ - 2].join(" ");
-		}
-		else
-		{
-			this._filename = finalLine.split(" has no code").front;	
+		} else {
+			this._filename = finalLine.split(" has no code").front;
 		}
 	}
-
 
 	/** LSTFile direntry constructor
 	 *
@@ -113,52 +101,38 @@ public struct LSTFile
 	 * LSTFile lst = LSTFile("tuna.lst");
 	 * --------------------
 	 */
-	@safe
-	public this(DirEntry file)
-	{
+	@safe public this(DirEntry file) {
 		assert(file.isFile, "You should pass a file, not a directory!");
 		this(file.name);
 	}
 
-
 	/**
 	 * Returns: Path of the covered filename
 	 */
-	@safe pure
-	public string filename() const @property
-	{
+	@safe pure public string filename() const @property {
 		return _filename;
 	}
-
 
 	/**
 	 * Returns: Total coverage percentage
 	 */
-	@safe pure
-	public ubyte totalCoverage() const @property
-	{
+	@safe pure public ubyte totalCoverage() const @property {
 		return _totalCoverage;
 	}
-
 
 	/**
 	 * Returns: Associative array of covered lines
 	 */
-	@safe pure
-	public const(int[size_t]) linesCovered() const @property
-	{
+	@safe pure public const(int[size_t]) linesCovered() const @property {
 		return _linesCovered.dup;
 	}
 
 	/**
 	 * Returns: Coverage value of the covered line
 	 */
-	@safe pure
-	public int opIndex(size_t i)
-	{
+	@safe pure public int opIndex(size_t i) {
 		return _linesCovered[i];
 	}
-
 
 	private string _filename;
 	private ubyte _totalCoverage;

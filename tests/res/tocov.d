@@ -1,8 +1,7 @@
 module tests.res.tocov;
 
 ///
-int foo(int t)
-{
+int foo(int t) {
 	return t * 2;
 }
 
