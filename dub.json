@@ -2,6 +2,7 @@
 	"name": "liblstparse",
 	"sourcePaths": ["source"],
 	"importPaths": ["source"],
+	"license": "LGPL-3.0",
 	"targetPath": ".out/bin",
 	"targetName": "lstparse",
 	"configurations": [
