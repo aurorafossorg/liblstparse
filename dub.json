@@ -1,5 +1,6 @@
 {
 	"name": "liblstparse",
+	"description": "A simple parser for LST coverage files",
 	"sourcePaths": ["source"],
 	"importPaths": ["source"],
 	"license": "LGPL-3.0",
