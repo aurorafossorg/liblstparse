@@ -1,12 +1,14 @@
 module liblstparse.tests.parser;
 
-import std.array;
-import std.file;
-import std.exception;
+import aurorafw.unit.assertion;
+
 import core.exception;
 
 import liblstparse.parser;
-import aurorafw.unit.assertion;
+
+import std.array;
+import std.exception;
+import std.file;
 
 @safe @("No coverage")
 unittest {
@@ -22,13 +24,13 @@ unittest {
 	assertEquals("zerocov.d", file.filename);
 	assertEquals(0, file.totalCoverage);
 	assertFalse(file.linesCovered.empty);
-	assertEquals(0, file.linesCovered[6]);
+	assertEquals(0, file.linesCovered[5]);
 }
 
 @system @("Range violation")
 unittest {
 	LSTFile file = LSTFile("tests/res/zerocov.lst");
-	assertNotThrown!RangeError(file.linesCovered[6]);
+	assertNotThrown!RangeError(file.linesCovered[5]);
 	assertThrown!RangeError(file.linesCovered[4]);
 }
 
@@ -43,8 +45,8 @@ unittest {
 	assertEquals("tocov.d", file.filename);
 	assertEquals(100, file.totalCoverage);
 	assertFalse(file.linesCovered.empty);
-	assertEquals(1, file.linesCovered[6]);
-	assertEquals(file.linesCovered[6], file[6]);
-	assertEquals(1, file.linesCovered[11]);
-	assertEquals(file.linesCovered[11], file[11]);
+	assertEquals(1, file.linesCovered[5]);
+	assertEquals(file.linesCovered[5], file[5]);
+	assertEquals(1, file.linesCovered[10]);
+	assertEquals(file.linesCovered[10], file[10]);
 }

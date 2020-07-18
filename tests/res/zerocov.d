@@ -6,5 +6,5 @@ int foo(int t) {
 }
 
 ///
-unittest {
+@safe unittest {
 }

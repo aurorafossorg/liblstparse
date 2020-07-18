@@ -1,11 +1,11 @@
 module tests.res.tocov;
 
 ///
-int foo(int t) {
+@safe int foo(int t) {
 	return t * 2;
 }
 
 ///
-unittest {
+@safe unittest {
 	assert(foo(2) == 4);
 }
