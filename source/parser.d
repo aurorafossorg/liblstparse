@@ -101,7 +101,7 @@ import std.array;
 	 * LSTFile lst = LSTFile("tuna.lst");
 	 * --------------------
 	 */
-	@safe public this(DirEntry file) {
+	@trusted public this(DirEntry file) {
 		assert(file.isFile, "You should pass a file, not a directory!");
 		this(file.name);
 	}
