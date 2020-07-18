@@ -45,13 +45,13 @@ Date: 2020
 +/
 module liblstparse.parser;
 
-import std.file;
-import std.string;
-import std.range.primitives;
-import std.algorithm.searching;
-import std.typecons;
 import std.algorithm.iteration;
+import std.algorithm.searching;
 import std.array;
+import std.file;
+import std.range.primitives;
+import std.string;
+import std.typecons;
 
 /** LST File struct
  *
