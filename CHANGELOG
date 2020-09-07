@@ -1,2 +1,7 @@
 v1.0.0
 - First Release
+
+v1.1.0
+- add merge lst files capability
+- add lst file generation capability
+- ctor is now for raw data, use `LSTFile.fromFilePath` instead
