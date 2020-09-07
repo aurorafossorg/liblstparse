@@ -45,19 +45,38 @@ Date: 2020
 +/
 module liblstparse.parser;
 
-import std.algorithm.iteration;
-import std.algorithm.searching;
+import std.algorithm;
 import std.array;
+import std.ascii;
+import std.conv : to;
+import std.exception;
 import std.file;
+import std.format;
 import std.range.primitives;
 import std.string;
 import std.typecons;
+import std.typecons;
+
+///
+class LSTFileParseException : Exception
+{
+	///
+	mixin basicExceptionCtors;
+}
+
+///
+class LSTFileMergeException : Exception
+{
+	///
+	mixin basicExceptionCtors;
+}
 
 /** LST File struct
  *
  * This defines an LST File model with all associated covered lines.
  */
-@safe public struct LSTFile {
+@safe public struct LSTFile
+{
 	/** LSTFile filename constructor
 	 *
 	 * This constructs a LSTFile using directly the path of filename string
@@ -67,29 +86,58 @@ import std.typecons;
 	 * LSTFile lst = LSTFile("tuna.lst");
 	 * --------------------
 	 */
-	@safe public this(string filename) {
+	@safe public this(string text)
+	{
 		import std.conv : to;
 
-		auto buf = readText(filename).splitLines;
+		auto buf = text.splitLines;
 
-		foreach (i, ref line; buf[0 .. $ - 1]) {
-			immutable auto covered = line.split("|").front.strip;
+		enforce!LSTFileParseException(buf.length >= 2,
+				"Minimum number of lines is 2. Probably not parsing .lst file");
 
-			if (covered.empty)
-				continue;
+		foreach (i, ref line; buf[0 .. $ - 1])
+		{
+			immutable auto splittedLine = line.split("|");
+			// check if the line is from a LST file
+			enforce!LSTFileParseException(splittedLine.length >= 2,
+					"'|' separator not found. Probably not parsing .lst file");
 
-			this._linesCovered[i + 1] = covered.to!int;
+			immutable auto covered = splittedLine.front.strip;
+
+			_lines ~= Line(
+					(covered.empty) ? Nullable!(uint).init : nullable!uint(covered.to!uint),
+					splittedLine[1 .. $].join);
 		}
 
 		auto finalLine = buf.back;
 
-		if (!finalLine.endsWith(" has no code")) {
-			auto splitted = finalLine.split("% covered").front.split(" ");
-			this._totalCoverage = splitted.back.to!byte;
-			this._filename = splitted[0 .. $ - 2].join(" ");
-		} else {
-			this._filename = finalLine.split(" has no code").front;
+		if (!finalLine.endsWith(" has no code"))
+		{
+			auto s = finalLine.split("% covered");
+			// check if it actually splits
+			enforce!LSTFileParseException(s.length >= 2,
+					"The last line is not well formatted: missing '% covered'");
+
+			auto splitted = s.front.split(" ");
+			_totalCoverage = splitted.back.to!ubyte;
+
+			// check if lst is well formatted (has 'is' in splitted)
+			enforce!LSTFileParseException(splitted[$ - 2] == "is",
+					"The last line is not well formatted: missing ' is '");
+			// remove ' is ' from 'filename.d is x% covered'
+			_filename = splitted[0 .. $ - 2].join(" ");
 		}
+		else
+		{
+			_filename = finalLine.split(" has no code").front;
+		}
+	}
+
+	@safe public this(string filename, Line[] lines, Nullable!ubyte totalCoverage = Nullable!(ubyte).init)
+	{
+		_filename = filename;
+		_lines = lines;
+		_totalCoverage = totalCoverage;
 	}
 
 	/** LSTFile direntry constructor
@@ -101,40 +149,146 @@ import std.typecons;
 	 * LSTFile lst = LSTFile("tuna.lst");
 	 * --------------------
 	 */
-	@trusted public this(DirEntry file) {
-		assert(file.isFile, "You should pass a file, not a directory!");
-		this(file.name);
+	@trusted public this(DirEntry file)
+	in (file.isFile, "You should pass a file, not a directory!")
+	{
+		this(readText(file.name));
+	}
+
+	public static LSTFile fromFilePath(string filepath)
+	{
+		return LSTFile(DirEntry(filepath));
+	}
+
+	public LSTFile merge(LSTFile lstfile) const
+	in
+	{
+		// check if the coverage report is from the exact same
+		// source, otherwise fail
+		enforce!LSTFileMergeException(lstfile._filename == _filename,
+				"should merge with the same file");
+		enforce!LSTFileMergeException(lstfile._lines.length == _lines.length,
+				"lines length mismatch");
+
+	}
+	do
+	{
+		T getOr(T)(Nullable!T nullable, T t) const
+		{
+			if (!nullable.isNull)
+				return nullable.get();
+			return t;
+		}
+
+		// Can't use an appender here due to deprecation warning issue
+		// See: https://issues.dlang.org/show_bug.cgi?id=20552
+		Line[] lines;
+		//auto lines = appender!(Line[]);
+
+		foreach (idx, l; _lines)
+		{
+			enforce!LSTFileMergeException(l.content == lstfile._lines[idx].content,
+					format!"content mismatch at line %s"(idx + 1));
+			Nullable!uint cov;
+
+			if (!(l.coverage.isNull && lstfile._lines[idx].coverage.isNull))
+				cov = getOr(lstfile._lines[idx].coverage, 0) + getOr(l.coverage, 0);
+
+			lines ~= Line(cov, l.content);
+		}
+
+		return LSTFile(lstfile._filename, lines[]);
+	}
+
+	public static LSTFile merge(LSTFile lfile1, LSTFile lfile2)
+	{
+		return lfile1.merge(lfile2);
 	}
 
 	/**
 	 * Returns: Path of the covered filename
 	 */
-	@safe pure public string filename() const @property {
+	@safe pure public string filename() const @property
+	{
 		return _filename;
 	}
 
 	/**
 	 * Returns: Total coverage percentage
 	 */
-	@safe pure public ubyte totalCoverage() const @property {
-		return _totalCoverage;
+	@safe pure public ubyte totalCoverage()
+	{
+		if (_totalCoverage.isNull)
+		{
+			auto assocArr = linesCovered();
+			if (assocArr.empty)
+			{
+				_totalCoverage = nullable!ubyte(0);
+				return 0;
+			}
+
+			size_t ret;
+			foreach (k, v; assocArr)
+				if (v > 0)
+					ret++;
+
+			// its fine to do this operation as it won't devide by 0 and its
+			// also fine to cast this because it won't be greater than 100,
+			// mathematically
+			return (_totalCoverage = nullable!ubyte(
+					cast(ubyte)((ret / cast(float) assocArr.length) * 100)
+			)).get();
+
+		}
+		return _totalCoverage.get();
 	}
 
 	/**
 	 * Returns: Associative array of covered lines
 	 */
-	@safe pure public const(int[size_t]) linesCovered() const @property {
-		return _linesCovered.dup;
+	@safe pure public const(uint[size_t]) linesCovered() const @property
+	{
+		uint[size_t] ret;
+		foreach (i, l; _lines)
+			if (l.coverage.isNull)
+				continue;
+			else
+				ret[i] = l.coverage.get();
+
+		return ret;
+	}
+
+	/**
+	 * Returns: Associative array of covered lines
+	 */
+	@safe pure public const(Line[]) lines() const @property
+	{
+		return _lines.dup;
 	}
 
 	/**
 	 * Returns: Coverage value of the covered line
 	 */
-	@safe pure public int opIndex(size_t i) {
-		return _linesCovered[i];
+	@safe pure public Line opIndex(size_t i)
+	{
+		return _lines[i];
+	}
+
+	/**
+	 * Coverable Lines
+	 *
+	 * This struct defines a coverable line in the lst file.
+	 */
+	struct Line
+	{
+		/// coverage of that line (if appliable)
+		Nullable!uint coverage;
+
+		/// content of the line
+		string content;
 	}
 
 	private string _filename;
-	private ubyte _totalCoverage;
-	private int[size_t] _linesCovered;
+	private Line[] _lines;
+	private Nullable!ubyte _totalCoverage;
 }
