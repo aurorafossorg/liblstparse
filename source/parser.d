@@ -92,6 +92,9 @@ class LSTFileMergeException : Exception
 
 		auto buf = text.splitLines;
 
+		if (buf.empty) // at the time, an empty file is generated from any empty .d file
+			return;
+
 		enforce!LSTFileParseException(buf.length >= 2,
 				"Minimum number of lines is 2. Probably not parsing .lst file");
 
@@ -158,6 +161,45 @@ class LSTFileMergeException : Exception
 	public static LSTFile fromFilePath(string filepath)
 	{
 		return LSTFile(DirEntry(filepath));
+	}
+
+	public string generateLST()
+	{
+		auto ret = appender!string();
+		if (_lines.empty) // at the time this is the behavior when generating lst file
+			// from an empty .d file
+			return "";
+
+		// no need to calculate totalCoverage if there's no coverable lines and
+		// _totalCoverage is null
+		bool nocov = true;
+
+		foreach (l; _lines)
+		{
+			auto genline = format!"|%s\n"(l.content);
+			string prefixCov;
+			if (l.coverage.isNull)
+			{
+				prefixCov = format!"%7s"(" "); // fill with spaces
+			}
+			else
+			{
+				nocov = false;
+				if (l.coverage.get() == 0)
+					prefixCov = format!"%07d"(0); // fill with 0s
+				else
+					prefixCov = format!"%7d"(l.coverage.get());
+			}
+
+			ret ~= prefixCov ~ genline;
+		}
+
+		if (nocov)
+			ret ~= format!"%s has no code"(_filename);
+		else
+			ret ~= format!"%s is %d%% covered"(_filename, totalCoverage);
+
+		return ret[];
 	}
 
 	public LSTFile merge(LSTFile lstfile) const

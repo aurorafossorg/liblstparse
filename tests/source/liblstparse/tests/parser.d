@@ -186,3 +186,34 @@ unittest {
 		file.lines[4]
 	);
 }
+
+@safe @("Generate LST")
+unittest
+{
+	auto covfile1 = `
+       |@safe int foo(int t) {
+      1|        return t * 2;
+       |}
+covfile.d is 100% covered`[1 .. $];
+	auto covfile2 = `
+       |@safe int foo(int t) {
+0000000|        return t * 2;
+       |}
+covfile.d is 0% covered`[1 .. $];
+	auto covfile3 = `
+       |@safe int foo(int t) {
+       |        return t * 2;
+       |}
+covfile.d has no code`[1 .. $];
+
+	auto file1 = LSTFile(covfile1);
+	auto file2 = LSTFile(covfile2);
+	auto file3 = LSTFile(covfile3);
+	auto emptyFile = LSTFile("");
+
+	// should generate the exact same file
+	assertEquals(covfile1, file1.generateLST);
+	assertEquals(covfile2, file2.generateLST);
+	assertEquals(covfile3, file3.generateLST);
+	assertEquals("", emptyFile.generateLST);
+}
