@@ -78,14 +78,18 @@ class LSTFileMergeException : Exception
  */
 @safe public struct LSTFile
 {
-	/** LSTFile filename constructor
+	/** LSTFile file content constructor
 	 *
-	 * This constructs a LSTFile using directly the path of filename string
+	 * This constructs a LSTFile using directly the content of the lst file
 	 *
 	 * Examples:
 	 * --------------------
-	 * LSTFile lst = LSTFile("tuna.lst");
+	 * auto text = readText("tuna.lst");
+	 * LSTFile lst = LSTFile(text);
 	 * --------------------
+	 *
+	 * Params:
+	 *   text = content of the lst file
 	 */
 	@safe public this(string text)
 	{
@@ -137,6 +141,16 @@ class LSTFileMergeException : Exception
 		}
 	}
 
+	/**
+	 * LSTFile constructor
+	 *
+	 * This constructs the LSTFile from customizable parameters
+	 *
+	 * Params:
+	 *   filename = file name of the covered .d file
+	 *   lines = list of Line representing the coverage and line content
+	 *   totalCoverage = total reported coverage in percentage
+	 */
 	@safe public this(string filename, Line[] lines, Nullable!ubyte totalCoverage = Nullable!(ubyte).init)
 	{
 		_filename = filename;
@@ -150,8 +164,11 @@ class LSTFileMergeException : Exception
 	 *
 	 * Examples:
 	 * --------------------
-	 * LSTFile lst = LSTFile("tuna.lst");
+	 * LSTFile lst = LSTFile(DirEntry("tuna.lst"));
 	 * --------------------
+	 *
+	 * Params:
+	 *   file = file path
 	 */
 	@trusted public this(DirEntry file)
 	in (file.isFile, "You should pass a file, not a directory!")
@@ -159,11 +176,24 @@ class LSTFileMergeException : Exception
 		this(readText(file.name));
 	}
 
+	/**
+	 * Constructs an LSTFile object from a given
+	 * file path
+	 *
+	 * Params:
+	 *   filepath = file path of the lst file
+	 * Returns: constructed LSTFile object
+	 */
 	public static LSTFile fromFilePath(string filepath)
 	{
 		return LSTFile(DirEntry(filepath));
 	}
 
+	/**
+	 * Generate the corresponding lst text file to this object
+	 *
+	 * Returns: generated lst file content
+	 */
 	public string generateLST()
 	{
 		auto ret = appender!string();
@@ -203,6 +233,13 @@ class LSTFileMergeException : Exception
 		return ret[];
 	}
 
+	/**
+	 * Merge this LSTFile object with a given one
+	 *
+	 * Params:
+	 *   lstfile = lstfile object to merge with
+	 * Returns: merged lstfile object
+	 */
 	public LSTFile merge(LSTFile lstfile) const
 	in
 	{
@@ -243,6 +280,14 @@ class LSTFileMergeException : Exception
 		return LSTFile(lstfile._filename, lines[]);
 	}
 
+	/**
+	 * Merge two given LSTFile objects
+	 *
+	 * Params:
+	 *   lfile1 = first LSTFile object to merge
+	 *   lfile2 = second LSTFile object to merge
+	 * Returns: a merged LSTFIle object
+	 */
 	public static LSTFile merge(LSTFile lfile1, LSTFile lfile2)
 	{
 		return lfile1.merge(lfile2);
@@ -287,7 +332,7 @@ class LSTFileMergeException : Exception
 	}
 
 	/**
-	 * Returns: Associative array of covered lines
+	 * Returns: Associative array of coverable lines
 	 */
 	@safe pure public const(uint[size_t]) linesCovered() const @property
 	{
@@ -302,7 +347,7 @@ class LSTFileMergeException : Exception
 	}
 
 	/**
-	 * Returns: Associative array of covered lines
+	 * Returns: Array of covered lines
 	 */
 	@safe pure public const(Line[]) lines() const @property
 	{
@@ -318,7 +363,7 @@ class LSTFileMergeException : Exception
 	}
 
 	/**
-	 * Coverable Lines
+	 * Coverable Line
 	 *
 	 * This struct defines a coverable line in the lst file.
 	 */
