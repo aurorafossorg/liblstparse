@@ -95,7 +95,7 @@ class LSTFileMergeException : Exception
 	{
 		import std.conv : to;
 
-		auto buf = text.splitLines;
+		auto buf = text.chomp.splitLines;
 
 		if (buf.empty) // at the time, an empty file is generated from any empty .d file
 			return;
@@ -229,6 +229,8 @@ class LSTFileMergeException : Exception
 			ret ~= format!"%s has no code"(_filename);
 		else
 			ret ~= format!"%s is %d%% covered"(_filename, totalCoverage);
+
+		ret ~= newline;
 
 		return ret[];
 	}
