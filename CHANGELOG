@@ -8,3 +8,6 @@ v1.1.0
 
 v1.1.1
 - Fix import paths for dub
+
+v1.1.2
+- Generate files that comply with 3.206 of POSIX file standard
